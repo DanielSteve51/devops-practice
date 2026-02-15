@@ -1,56 +1,48 @@
 pipeline {
     agent any
 
-    environment {
-        DEPLOY_PATH = "/opt/tomcat/webapps"
+    tools {
+        maven 'Maven3'
     }
+
+    // environment {
+    //     NEXUS_URL  = "http://<NEXUS_IP>:8081"
+    //     NEXUS_REPO = "maven-snapshots"
+    // }
 
     stages {
 
         stage('Checkout') {
             steps {
                 checkout scm
-                echo "Cloning Git Repo"
-            }
-        }
-
-        stage('Read POM') {
-            steps {
-                script {
-                    def pom = readMavenPom file: 'pom.xml'
-
-                    env.WAR_NAME = pom.build?.finalName
-                        ? "${pom.build.finalName}.war"
-                        : "${pom.artifactId}-${pom.version}.war"
-
-                    echo "WAR detected: ${env.WAR_NAME}"
-                }
             }
         }
 
         stage('Build WAR') {
             steps {
-                sh 'mvn clean package'
-                echo "Building .war"
+                sh 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Deploy to Tomcat') {
-            steps {
-                sh """
-                scp $WORKSPACE/target/${env.WAR_NAME} ec2-user@${TOMCAT_IP}:${DEPLOY_PATH}/
-                """
-                echo "Deploying to Tomcat"
-            }
+        stage('Upload to Nexus') {
+    steps {
+        script {
+            def pom = readMavenPom file: 'pom.xml'
+
+            nexusArtifactUploader(
+                nexusUrl: "${env.NEXUS_URL}",
+                repository: "${env.NEXUS_REPO}",
+                groupId: pom.groupId,
+                artifactId: pom.artifactId,
+                version: pom.version + "-${env.BUILD_NUMBER}",
+                credentialsId: "nexus-creds",
+                artifacts: [
+                    [artifactId: pom.artifactId, classifier: "", file: "target/${pom.artifactId}.war", type: "war"]
+                ]
+            )
         }
     }
+}
 
-    post {
-        success {
-            echo "Success"
-        }
-        failure {
-            echo "Failed"
-        }
     }
 }
