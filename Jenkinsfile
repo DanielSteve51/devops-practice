@@ -36,7 +36,7 @@ pipeline {
                 repository: params.NEXUS_REPO,
                 groupId: pom.groupId,
                 artifactId: pom.artifactId,
-                version: pom.version + "-${env.BUILD_NUMBER}",
+                version: pom.version,
                 credentialsId: "nexus-creds",
                 artifacts: [
                     [artifactId: pom.artifactId, classifier: "", file: "target/${pom.artifactId}.war", type: "war"]
