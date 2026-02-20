@@ -1,9 +1,7 @@
 pipeline {
     agent any
 
-    tools {
-        maven 'Maven3'
-    }
+    
 
     parameters {
         string(name: 'NEXUS_URL', defaultValue: 'http://NEXUS_IP:8081', description: 'Nexus server URL')
