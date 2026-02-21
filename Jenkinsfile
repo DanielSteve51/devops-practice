@@ -1,15 +1,20 @@
 pipeline {
     agent any
 
-     parameters {
+    parameters {
         string(name: 'NEXUS_IP',
                defaultValue: '',
                description: 'Private IP of Nexus server')
-         string(name: 'TOMCAT_IP',
+
+        string(name: 'TOMCAT_IP',
                defaultValue: '',
                description: 'Private IP of Tomcat server')
+
+        string(name: 'RELEASE_VERSION',
+               defaultValue: '1.0',
+               description: 'Version to deploy (e.g. 1.0 or 1.1)')
     }
-    
+
     environment {
         NEXUS_BASE_URL = "http://${params.NEXUS_IP}:8081"
     }
@@ -38,7 +43,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 1, unit: 'MINUTES') {
+                timeout(time: 3, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -59,7 +64,7 @@ pipeline {
 
                         sh """
                         mvn deploy \
-                        --settings $MAVEN_SETTINGS \
+                        --settings \$MAVEN_SETTINGS \
                         -Dnexus.release.url=${NEXUS_BASE_URL}/repository/maven-releases/ \
                         -Dnexus.snapshot.url=${NEXUS_BASE_URL}/repository/maven-snapshots/ \
                         -DskipTests
@@ -70,34 +75,37 @@ pipeline {
         }
 
         stage('Deploy to Tomcat') {
-    steps {
-        withCredentials([
-            usernamePassword(
-                credentialsId: 'nexus-creds',
-                usernameVariable: 'NEXUS_USER',
-                passwordVariable: 'NEXUS_PASS'
-            ),
-            usernamePassword(
-                credentialsId: 'tomcatManager-creds',
-                usernameVariable: 'TOMCAT_USER',
-                passwordVariable: 'TOMCAT_PASS'
-            )
-        ]) {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'nexus-creds',
+                        usernameVariable: 'NEXUS_USER',
+                        passwordVariable: 'NEXUS_PASS'
+                    ),
+                    usernamePassword(
+                        credentialsId: 'tomcatManager-creds',
+                        usernameVariable: 'TOMCAT_USER',
+                        passwordVariable: 'TOMCAT_PASS'
+                    )
+                ]) {
 
-            sh """
-            # Download WAR from Nexus
-            curl -u ${NEXUS_USER}:${NEXUS_PASS} \
-            ${params.NEXUS_URL}/repository/maven-releases/com/daniel/test/java_maven_webApp/${params.RELEASE_VERSION}/java_maven_webApp-${params.RELEASE_VERSION}.war \
-            -o app.war
+                    sh '''
+                    echo "Downloading WAR from Nexus..."
 
-            # Deploy using Tomcat Manager API
-            curl -u ${TOMCAT_USER}:${TOMCAT_PASS} \
-            -T app.war \
-            "http://${params.TOMCAT_IP}:8080/manager/text/deploy?path=/java_maven_webApp&update=true"
-            """
+                    curl -f -u $NEXUS_USER:$NEXUS_PASS \
+                    "$NEXUS_BASE_URL/repository/maven-releases/com/daniel/test/java_maven_webApp/$RELEASE_VERSION/java_maven_webApp-$RELEASE_VERSION.war" \
+                    -o app.war
+
+                    echo "Deploying to Tomcat..."
+
+                    curl -f -u $TOMCAT_USER:$TOMCAT_PASS \
+                    -T app.war \
+                    "http://$TOMCAT_IP:8080/manager/text/deploy?path=/java_maven_webApp&update=true"
+
+                    echo "Deployment completed."
+                    '''
+                }
+            }
         }
-    }
-}
-        
     }
 }
