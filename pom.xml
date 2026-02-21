@@ -11,6 +11,19 @@
     <maven.compiler.source>17</maven.compiler.source>
     <maven.compiler.target>17</maven.compiler.target>
 </properties>
+
+  <distributionMangement>
+    <repository>
+       <id>nexus-releases</id>
+            <url>${nexus.release.url}</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>nexus-snapshots</id>
+            <url>${nexus.snapshot.url}</url>
+        </snapshotRepository>
+    </distributionManagement>
+  
   <dependencies>
     <dependency>
       <groupId>junit</groupId>
