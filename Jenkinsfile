@@ -1,11 +1,14 @@
 pipeline {
     agent any
 
+     parameters {
+        string(name: 'NEXUS_IP',
+               defaultValue: '',
+               description: 'Private IP of Nexus server')
+    }
     
-
-    parameters {
-        string(name: 'NEXUS_URL', defaultValue: 'http://NEXUS_IP:8081', description: 'Nexus server URL')
-        string(name: 'NEXUS_REPO', defaultValue: 'maven-snapshots', description: 'Target Nexus repository')
+    environment {
+        NEXUS_BASE_URL = "http://${params.NEXUS_IP}:8081"
     }
 
     stages {
@@ -16,33 +19,51 @@ pipeline {
             }
         }
 
-        stage('Build WAR') {
+        stage('Build') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
         }
 
-          stage('Upload to Nexus') {
-    steps {
-        script {
-            def pom = readMavenPom file: 'pom.xml'
-
-            nexusArtifactUploader(
-                nexusVersion: 'nexus3',
-                protocol: 'http',
-                nexusUrl: params.NEXUS_URL.replace('http://', '').replace('https://', ''),
-                repository: params.NEXUS_REPO,
-                groupId: pom.groupId,
-                artifactId: pom.artifactId,
-                version: pom.version,
-                credentialsId: "nexus-creds",
-                artifacts: [
-                    [artifactId: pom.artifactId, classifier: "", file: "target/${pom.artifactId}.war", type: "war"]
-                ]
-            )
+        stage('Sonar Analysis') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    sh 'mvn sonar:sonar'
+                }
+            }
         }
-    }
-}
 
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 2, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Deploy to Nexus') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'nexus-creds',
+                    usernameVariable: 'NEXUS_USERNAME',
+                    passwordVariable: 'NEXUS_PASSWORD'
+                )]) {
+
+                    configFileProvider([configFile(
+                        fileId: 'maven-settings',
+                        variable: 'MAVEN_SETTINGS'
+                    )]) {
+
+                        sh """
+                        mvn deploy \
+                        --settings $MAVEN_SETTINGS \
+                        -Dnexus.release.url=${NEXUS_BASE_URL}/repository/maven-releases/ \
+                        -Dnexus.snapshot.url=${NEXUS_BASE_URL}/repository/maven-snapshots/ \
+                        -DskipTests
+                        """
+                    }
+                }
+            }
+        }
     }
 }
