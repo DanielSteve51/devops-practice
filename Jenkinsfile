@@ -71,23 +71,33 @@ pipeline {
 
         stage('Deploy to Tomcat') {
     steps {
-        sshagent(['tomcat-ssh-key']) {
-            withCredentials([usernamePassword(
+        withCredentials([
+            usernamePassword(
                 credentialsId: 'nexus-creds',
                 usernameVariable: 'NEXUS_USER',
                 passwordVariable: 'NEXUS_PASS'
-            )]) {
+            ),
+            usernamePassword(
+                credentialsId: 'tomcatManager-creds',
+                usernameVariable: 'TOMCAT_USER',
+                passwordVariable: 'TOMCAT_PASS'
+            )
+        ]) {
 
-                sh """
-                ssh ubuntu@${params.TOMCAT_IP} '
-                curl -u ${NEXUS_USER}:${NEXUS_PASS} \
-                http://${params.NEXUS_IP}:8081/repository/maven-releases/com/daniel/test/java_maven_webApp/1.0/java_maven_webApp-1.0.war \
-                -o /opt/tomcat/webapps/java_maven_webApp.war
-                '
-                """
-            }
+            sh """
+            # Download WAR from Nexus
+            curl -u ${NEXUS_USER}:${NEXUS_PASS} \
+            ${params.NEXUS_URL}/repository/maven-releases/com/daniel/test/java_maven_webApp/${params.RELEASE_VERSION}/java_maven_webApp-${params.RELEASE_VERSION}.war \
+            -o app.war
+
+            # Deploy using Tomcat Manager API
+            curl -u ${TOMCAT_USER}:${TOMCAT_PASS} \
+            -T app.war \
+            "http://${params.TOMCAT_IP}:8080/manager/text/deploy?path=/java_maven_webApp&update=true"
+            """
         }
     }
 }
+        
     }
 }
