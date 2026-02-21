@@ -5,6 +5,9 @@ pipeline {
         string(name: 'NEXUS_IP',
                defaultValue: '',
                description: 'Private IP of Nexus server')
+         string(name: 'TOMCAT_IP',
+               defaultValue: '',
+               description: 'Private IP of Tomcat server')
     }
     
     environment {
@@ -65,5 +68,26 @@ pipeline {
                 }
             }
         }
+
+        stage('Deploy to Tomcat') {
+    steps {
+        sshagent(['tomcat-ssh-key']) {
+            withCredentials([usernamePassword(
+                credentialsId: 'nexus-creds',
+                usernameVariable: 'NEXUS_USER',
+                passwordVariable: 'NEXUS_PASS'
+            )]) {
+
+                sh """
+                ssh ubuntu@${params.TOMCAT_IP} '
+                curl -u ${NEXUS_USER}:${NEXUS_PASS} \
+                http://${params.NEXUS_IP}:8081/repository/maven-releases/com/daniel/test/java_maven_webApp/1.0/java_maven_webApp-1.0.war \
+                -o /opt/tomcat/webapps/java_maven_webApp.war
+                '
+                """
+            }
+        }
+    }
+}
     }
 }
