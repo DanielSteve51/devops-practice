@@ -63,6 +63,8 @@ pipeline {
                     )]) {
 
                         sh """
+                        mvn versions:set -DnewVersion=${params.RELEASE_VERSION}
+                        mvn versions:commit
                         mvn deploy \
                         --settings \$MAVEN_SETTINGS \
                         -Dnexus.release.url=${NEXUS_BASE_URL}/repository/maven-releases/ \
