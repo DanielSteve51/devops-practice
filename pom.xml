@@ -4,7 +4,7 @@
   <groupId>com.daniel.test</groupId>
   <artifactId>java_maven_webApp</artifactId>
   <packaging>war</packaging>
-  <version>1.0</version>
+  <version>1.1</version>
   <name>java_maven_webApp</name>
   <url>http://maven.apache.org</url>
   <properties>
