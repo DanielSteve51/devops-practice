@@ -9,7 +9,6 @@ pipeline {
 
     environment {
         NEXUS_BASE_URL = "http://${params.NEXUS_IP}:8081"
-        RELEASE_VERSION = "1.0.${BUILD_NUMBER}"
     }
 
     stages {
@@ -56,10 +55,9 @@ pipeline {
                     )]) {
 
                         sh """
-                        mvn versions:set -DnewVersion=${RELEASE_VERSION}
-                        mvn versions:commit
-                        mvn deploy \
+                        mvn clean deploy \
                         --settings \$MAVEN_SETTINGS \
+                        -Drevision=${BUILD_NUMBER} \
                         -Dnexus.release.url=${NEXUS_BASE_URL}/repository/maven-releases/ \
                         -Dnexus.snapshot.url=${NEXUS_BASE_URL}/repository/maven-snapshots/ \
                         -DskipTests
@@ -68,7 +66,5 @@ pipeline {
                 }
             }
         }
-
-
     }
 }
