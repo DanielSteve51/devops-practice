@@ -30,20 +30,32 @@ pipeline{
         }
     }
 
-    stage('Deploy to Tomcat') {
-            steps {
-                withCredentials([sshUserPrivateKey(
-                    credentialsId: 'tomcat-ssh',
-                    keyFileVariable: 'SSH_KEY'
-                )]) {
+  stage('Deploy to Tomcat') {
+    steps {
+        withCredentials([
+            sshUserPrivateKey(
+                credentialsId: 'tomcat-ssh',
+                keyFileVariable: 'SSH_KEY'
+            ),
+            usernamePassword(
+                credentialsId: 'nexus-creds',
+                usernameVariable: 'NEXUS_USERNAME',
+                passwordVariable: 'NEXUS_PASSWORD'
+            )
+        ]) {
 
-                    sh """
-                    scp -i $SSH_KEY -o StrictHostKeyChecking=no \
-                    ${ARTIFACT_NAME}.war \
-                    ubuntu@${params.TOMCAT_IP}:/opt/tomcat/webapps/
-                    """
-                }
-            }
+            sh """
+            ssh -i $SSH_KEY -o StrictHostKeyChecking=no ubuntu@${params.TOMCAT_IP} '
+                rm -rf /opt/tomcat/webapps/java_maven_webApp*
+                
+                curl -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} \
+                -o /opt/tomcat/webapps/java_maven_webApp.war \
+                http://${params.NEXUS_IP}:8081/repository/maven-releases/com/daniel/test/java_maven_webApp/${params.VERSION}/java_maven_webApp-${params.VERSION}.war
+            '
+            """
         }
+    }
+}
+    
   }
 }
