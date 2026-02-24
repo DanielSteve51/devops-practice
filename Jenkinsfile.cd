@@ -24,7 +24,7 @@ pipeline{
                         sh """
                         curl -u $NEXUS_USER:$NEXUS_PASS \
                         -o ${ARTIFACT_NAME}.war \
-                        http://${params.NEXUS_IP}:8081/repository/maven-releases/${GROUP_PATH}/${params.VERSION}/${ARTIFACT_NAME}-${params.VERSION}.war
+                        http://${params.NEXUS_IP}:8081/repository/maven-releases/${GROUP_PATH}/${params.RELEASE_VERSION}/${ARTIFACT_NAME}-${params.RELEASE_VERSION}.war
                         """
             }
         }
@@ -50,7 +50,7 @@ pipeline{
                 
                 curl -u ${NEXUS_USERNAME}:${NEXUS_PASSWORD} \
                 -o /opt/tomcat/webapps/java_maven_webApp.war \
-                http://${params.NEXUS_IP}:8081/repository/maven-releases/com/daniel/test/java_maven_webApp/${params.VERSION}/java_maven_webApp-${params.VERSION}.war
+                http://${params.NEXUS_IP}:8081/repository/maven-releases/com/daniel/test/java_maven_webApp/${params.RELEASE_VERSION}/java_maven_webApp-${params.RELEASE_VERSION}.war
             '
             """
         }
