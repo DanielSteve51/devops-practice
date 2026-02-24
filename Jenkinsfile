@@ -13,7 +13,7 @@ pipeline {
 
     environment {
         NEXUS_BASE_URL = "http://${params.NEXUS_IP}:8081"
-        RELEASE_VERSION = "1.${BUILD_NUMBER}
+        RELEASE_VERSION = "1.${BUILD_NUMBER}"
     }
 
     stages {
