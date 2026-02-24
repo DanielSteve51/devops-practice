@@ -9,10 +9,6 @@ pipeline {
         string(name: 'TOMCAT_IP',
                defaultValue: '',
                description: 'Private IP of Tomcat server')
-
-        string(name: 'RELEASE_VERSION',
-               defaultValue: '1.0',
-               description: 'Version to deploy (e.g. 1.0 or 1.1)')
     }
 
     environment {
