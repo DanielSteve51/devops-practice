@@ -5,10 +5,6 @@ pipeline {
         string(name: 'NEXUS_IP',
                defaultValue: '',
                description: 'Private IP of Nexus server')
-
-        string(name: 'TOMCAT_IP',
-               defaultValue: '',
-               description: 'Private IP of Tomcat server')
     }
 
     environment {
