@@ -57,7 +57,7 @@ pipeline {
                         sh """
                         mvn clean deploy \
                         --settings \$MAVEN_SETTINGS \
-                        -Drevision=${BUILD_NUMBER} \
+                        -Drevision=1.5 \
                         -Dnexus.release.url=${NEXUS_BASE_URL}/repository/maven-releases/ \
                         -Dnexus.snapshot.url=${NEXUS_BASE_URL}/repository/maven-snapshots/ \
                         -DskipTests
