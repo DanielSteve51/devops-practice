@@ -17,6 +17,7 @@ pipeline {
 
     environment {
         NEXUS_BASE_URL = "http://${params.NEXUS_IP}:8081"
+        RELEASE_VERSION = 1.0.${BUILD_NUMBER}
     }
 
     stages {
@@ -63,7 +64,7 @@ pipeline {
                     )]) {
 
                         sh """
-                        mvn versions:set -DnewVersion=${params.RELEASE_VERSION}
+                        mvn versions:set -DnewVersion=${RELEASE_VERSION}
                         mvn versions:commit
                         mvn deploy \
                         --settings \$MAVEN_SETTINGS \
@@ -76,38 +77,6 @@ pipeline {
             }
         }
 
-        stage('Deploy to Tomcat') {
-            steps {
-                withCredentials([
-                    usernamePassword(
-                        credentialsId: 'nexus-creds',
-                        usernameVariable: 'NEXUS_USER',
-                        passwordVariable: 'NEXUS_PASS'
-                    ),
-                    usernamePassword(
-                        credentialsId: 'tomcatManager-creds',
-                        usernameVariable: 'TOMCAT_USER',
-                        passwordVariable: 'TOMCAT_PASS'
-                    )
-                ]) {
 
-                    sh '''
-                    echo "Downloading WAR from Nexus..."
-
-                    curl -f -u $NEXUS_USER:$NEXUS_PASS \
-                    "$NEXUS_BASE_URL/repository/maven-releases/com/daniel/test/java_maven_webApp/$RELEASE_VERSION/java_maven_webApp-$RELEASE_VERSION.war" \
-                    -o app.war
-
-                    echo "Deploying to Tomcat..."
-
-                    curl -f -u $TOMCAT_USER:$TOMCAT_PASS \
-                    -T app.war \
-                    "http://$TOMCAT_IP:8080/manager/text/deploy?path=/java_maven_webApp&update=true"
-
-                    echo "Deployment completed."
-                    '''
-                }
-            }
-        }
     }
 }
