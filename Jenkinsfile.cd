@@ -1,0 +1,49 @@
+pipeline{
+  agent any
+
+  parameters{
+    string(name:'RELEASE_VERSION',description:'Artifact Version to deploy')
+    string(name:'NEXUS_IP',description:'Private IP of Nexus Server')
+    string(name:'TOMCAT_IP',description:'Private IP of Tomcat Server')
+  }
+
+  environment{
+    ARTIFACT_NAME = "java_maven_webApp"
+    GROUP_PATH = "com/daniel/test/java_maven_webApp"
+  }
+
+  stages{
+    stage('Download from Nexus'){
+        steps{
+          withCredentials([usernamePassword(
+                        credentialsId: 'nexus-creds',
+                        usernameVariable: 'NEXUS_USER',
+                        passwordVariable: 'NEXUS_PASS'
+                    )]) {
+    
+                        sh """
+                        curl -u $NEXUS_USER:$NEXUS_PASS \
+                        -o ${ARTIFACT_NAME}.war \
+                        http://${params.NEXUS_IP}:8081/repository/maven-releases/${GROUP_PATH}/${params.VERSION}/${ARTIFACT_NAME}-${params.VERSION}.war
+                        """
+            }
+        }
+    }
+
+    stage('Deploy to Tomcat') {
+            steps {
+                withCredentials([sshUserPrivateKey(
+                    credentialsId: 'tomcat-ssh',
+                    keyFileVariable: 'SSH_KEY'
+                )]) {
+
+                    sh """
+                    scp -i $SSH_KEY -o StrictHostKeyChecking=no \
+                    ${ARTIFACT_NAME}.war \
+                    ubuntu@${params.TOMCAT_IP}:/opt/tomcat/webapps/
+                    """
+                }
+            }
+        }
+  }
+}
