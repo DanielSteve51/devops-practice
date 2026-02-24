@@ -5,10 +5,15 @@ pipeline {
         string(name: 'NEXUS_IP',
                defaultValue: '',
                description: 'Private IP of Nexus server')
+
+        string(name: 'TOMCAT_IP',
+               defaultValue: '',
+               description: 'Private IP of Tomcat server')
     }
 
     environment {
         NEXUS_BASE_URL = "http://${params.NEXUS_IP}:8081"
+        RELEASE_VERSION = "1.${BUILD_NUMBER}
     }
 
     stages {
@@ -64,6 +69,18 @@ pipeline {
                         """
                     }
                 }
+            }
+        }
+
+         stage('Trigger CD') {
+            steps {
+                build job: 'java_webApp_CD_TEST',   
+                    parameters: [
+                        string(name: 'RELEASE_VERSION', value: RELEASE_VERSION),
+                        string(name: 'NEXUS_IP', value: params.NEXUS_IP),
+                        string(name: 'TOMCAT_IP', value: params.TOMCAT_IP)
+                    ],
+                    wait: false
             }
         }
     }
