@@ -1,6 +1,6 @@
 <html>
 <body>
-<h2>Hello. This build is done using Jenkins -> Sonar QualityGate Check -> Nexus -> Tomcat v3</h2>
+<h2>Hello. This build is done using Jenkins -> Sonar QualityGate Check -> Nexus -> Tomcat v4</h2>
 
 <form action="<%= request.getContextPath() %>/divide" method="post">
     <input type="text" name="a" placeholder="Enter value1">
