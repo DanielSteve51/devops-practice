@@ -1,19 +1,10 @@
 pipeline {
     agent any
 
-    parameters {
-        string(name: 'NEXUS_IP',
-               defaultValue: '',
-               description: 'Private IP of Nexus server')
-
-        string(name: 'TOMCAT_IP',
-               defaultValue: '',
-               description: 'Private IP of Tomcat server')
-    }
 
     environment {
-        NEXUS_BASE_URL = "http://${params.NEXUS_IP}:8081"
         RELEASE_VERSION = "1.${BUILD_NUMBER}"
+        APP_NAME = "java_maven_webApp"
     }
 
     stages {
@@ -46,42 +37,16 @@ pipeline {
             }
         }
 
-        stage('Deploy to Nexus') {
-            steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'nexus-creds',
-                    usernameVariable: 'NEXUS_USERNAME',
-                    passwordVariable: 'NEXUS_PASSWORD'
-                )]) {
-
-                    configFileProvider([configFile(
-                        fileId: 'maven-settings',
-                        variable: 'MAVEN_SETTINGS'
-                    )]) {
-
-                        sh """
-                        mvn clean deploy \
-                        --settings \$MAVEN_SETTINGS \
-                        -Drevision=${BUILD_NUMBER} \
-                        -Dnexus.release.url=${NEXUS_BASE_URL}/repository/maven-releases/ \
-                        -Dnexus.snapshot.url=${NEXUS_BASE_URL}/repository/maven-snapshots/ \
-                        -DskipTests
-                        """
-                    }
+        stage('Build Docker Image'){
+            steps{
+                script{
+                    sh """
+                    docker build -t ${APP_NAME}:${BUILD_NUMBER} .
+                    docker tag ${APP_NAME}:${BUILD_NUMBER} ${APP_NAME}:latest
+                    """
                 }
             }
         }
 
-         stage('Trigger CD') {
-            steps {
-                build job: 'java_webApp_CD_TEST',   
-                    parameters: [
-                        string(name: 'RELEASE_VERSION', value: RELEASE_VERSION),
-                        string(name: 'NEXUS_IP', value: params.NEXUS_IP),
-                        string(name: 'TOMCAT_IP', value: params.TOMCAT_IP)
-                    ],
-                    wait: false
-            }
-        }
     }
 }
