@@ -72,7 +72,7 @@ pipeline {
                     aws ecs update-service \
                         --cluster ${ECS_CLUSTER} \
                         --service ${ECS_SERVICE} \
-                        --force-new-deplyment \
+                        --force-new-deployment \
                         --region ${AWS_REGION}
                     """
                 }
