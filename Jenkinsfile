@@ -4,7 +4,7 @@ pipeline {
 
     environment {
         RELEASE_VERSION = "1.${BUILD_NUMBER}"
-        APP_NAME = "java_maven_webApp"
+        APP_NAME = "java-maven-webApp"
     }
 
     stages {
