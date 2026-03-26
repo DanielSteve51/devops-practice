@@ -40,7 +40,7 @@
 
   </dependencies>
 <build>
-  <finalName>java-maven-webApp</finalName>
+  <finalName>java-maven-webapp</finalName>
   <plugins>
 
     <plugin>
