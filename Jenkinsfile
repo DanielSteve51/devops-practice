@@ -8,6 +8,8 @@ pipeline {
         AWS_REGION = "ap-south-2"
         ECR_REGISTRY = "199264265839.dkr.ecr.ap-south-2.amazonaws.com"
         ECR_REPO = "${ECR_REGISTRY}/${APP_NAME}"
+        ECS_CLUSTER = "java-maven-cluster"
+        ECS_SERVICE = "java-maven-service"
     }
 
     stages {
@@ -63,6 +65,20 @@ pipeline {
             }
         }
 
+        stage('Deploy to ECS'){
+            steps{
+                script{
+                    sh """
+                    aws ecs update-service \
+                        --cluster ${ECS_CLUSTER} \
+                        --service ${ECS_SERVICE} \
+                        --force-new-deplyment \
+                        --region ${AWS_REGION}
+                    """
+                }
+            }
+        }
+
         stage('Cleanup Local Images') {
             steps {
                 script {
@@ -75,14 +91,16 @@ pipeline {
             }
         }
 
+
+
     }
 
         post {
         success {
-            echo "✅ Image pushed to ECR: ${ECR_REPO}:${BUILD_NUMBER}"
+            echo "Deployed to ECS: ${ECS_CLUSTER}/${ECS_SERVICE}"
         }
         failure {
-            echo "❌ Pipeline failed at some stage"
+            echo "Pipeline failed at some stage"
         }
     }
 }
