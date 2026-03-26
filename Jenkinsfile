@@ -5,6 +5,9 @@ pipeline {
     environment {
         RELEASE_VERSION = "1.${BUILD_NUMBER}"
         APP_NAME = "java-maven-webapp"
+        AWS_REGION = "ap-south-2"
+        ECR_REGISTRY = "199264265839.dkr.ecr.ap-south-2.amazonaws.com"
+        ECR_REPO = "${ECR_REGISTRY}/${APP_NAME}"
     }
 
     stages {
@@ -42,11 +45,44 @@ pipeline {
                 script{
                     sh """
                     docker build -t ${APP_NAME}:${BUILD_NUMBER} .
-                    docker tag ${APP_NAME}:${BUILD_NUMBER} ${APP_NAME}:latest
+                    docker tag ${APP_NAME}:${BUILD_NUMBER} ${ECR_REPO}:${BUILD_NUMBER}
+                    docker tag ${APP_NAME}:${BUILD_NUMBER} ${ECR_REPO}:latest
                     """
                 }
             }
         }
 
+        stage('Push to ECR'){
+            steps{
+                script{
+                    sh """
+                    docker push ${ECR_REPO}:${BUILD_NUMBER}
+                    docker push ${ECR_REPO}:latest
+                    """
+                }
+            }
+        }
+
+        stage('Cleanup Local Images') {
+            steps {
+                script {
+                    sh """
+                    docker rmi ${APP_NAME}:${BUILD_NUMBER} || true
+                    docker rmi ${ECR_REPO}:${BUILD_NUMBER} || true
+                    docker rmi ${ECR_REPO}:latest || true
+                    """
+                }
+            }
+        }
+
+    }
+
+        post {
+        success {
+            echo "✅ Image pushed to ECR: ${ECR_REPO}:${BUILD_NUMBER}"
+        }
+        failure {
+            echo "❌ Pipeline failed at some stage"
+        }
     }
 }
