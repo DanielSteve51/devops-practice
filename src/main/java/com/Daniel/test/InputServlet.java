@@ -9,11 +9,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-@WebServlet("/calculate")
+@WebServlet("/divide")
 public class InputServlet extends HttpServlet {
-
-    private static final String RESULT_OPEN  = "<h2>Result: ";
-    private static final String RESULT_CLOSE = "</h2>";
 
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -24,28 +21,9 @@ public class InputServlet extends HttpServlet {
         try {
             int a = Integer.parseInt(request.getParameter("a"));
             int b = Integer.parseInt(request.getParameter("b"));
-            String op = request.getParameter("op");
-
-            if (op.equals("Add")) {
-                out.println(RESULT_OPEN + (a + b) + RESULT_CLOSE);
-            } else if (op.equals("Subtract")) {
-                out.println(RESULT_OPEN + (a - b) + RESULT_CLOSE);
-            } else if (op.equals("Multiply")) {
-                out.println(RESULT_OPEN + (a * b) + RESULT_CLOSE);
-            } else if (op.equals("Divide")) {
-                if (b == 0) {
-                    out.println("<h3>Cannot divide by zero</h3>");
-                } else {
-                    out.println(RESULT_OPEN + ((double) a / b) + RESULT_CLOSE);
-                }
-            } else if (op.equals("Modulus")) {
-                if (b == 0) {
-                    out.println("<h3>Cannot mod by zero</h3>");
-                } else {
-                    out.println(RESULT_OPEN + (a % b) + RESULT_CLOSE);
-                }
-            }
-
+            out.println("<h2>Result: " + (a / b) + "</h2>");
+        } catch (ArithmeticException e) {
+            out.println("<h3>Cannot divide by zero</h3>");
         } catch (NumberFormatException e) {
             out.println("<h3>Not a number</h3>");
         } catch (Exception e) {
