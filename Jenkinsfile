@@ -65,19 +65,19 @@ pipeline {
             }
         }
 
-        stage('Deploy to ECS'){
-            steps{
-                script{
-                    sh """
-                    aws ecs update-service \
-                        --cluster ${ECS_CLUSTER} \
-                        --service ${ECS_SERVICE} \
-                        --force-new-deployment \
-                        --region ${AWS_REGION}
-                    """
+            stage('Deploy to ECS'){
+                steps{
+                    script{
+                        sh """
+                        aws ecs update-service \
+                            --cluster ${ECS_CLUSTER} \
+                            --service ${ECS_SERVICE} \
+                            --force-new-deployment \
+                            --region ${AWS_REGION}
+                        """
+                    }
                 }
             }
-        }
 
         stage('Cleanup Local Images') {
             steps {
