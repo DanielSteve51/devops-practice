@@ -12,6 +12,9 @@ import javax.servlet.http.HttpServletResponse;
 @WebServlet("/calculate")
 public class InputServlet extends HttpServlet {
 
+    private static final String RESULT_OPEN  = "<h2>Result: ";
+    private static final String RESULT_CLOSE = "</h2>";
+
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
@@ -22,29 +25,24 @@ public class InputServlet extends HttpServlet {
             int a = Integer.parseInt(request.getParameter("a"));
             int b = Integer.parseInt(request.getParameter("b"));
             String op = request.getParameter("op");
-            int result;
 
             if (op.equals("Add")) {
-                result = a + b;
-                out.println("<h2>Result: " + result + "</h2>");
+                out.println(RESULT_OPEN + (a + b) + RESULT_CLOSE);
             } else if (op.equals("Subtract")) {
-                result = a - b;
-                out.println("<h2>Result: " + result + "</h2>");
+                out.println(RESULT_OPEN + (a - b) + RESULT_CLOSE);
             } else if (op.equals("Multiply")) {
-                result = a * b;
-                out.println("<h2>Result: " + result + "</h2>");
+                out.println(RESULT_OPEN + (a * b) + RESULT_CLOSE);
             } else if (op.equals("Divide")) {
                 if (b == 0) {
                     out.println("<h3>Cannot divide by zero</h3>");
                 } else {
-                    out.println("<h2>Result: " + (double) a / b + "</h2>");
+                    out.println(RESULT_OPEN + ((double) a / b) + RESULT_CLOSE);
                 }
             } else if (op.equals("Modulus")) {
                 if (b == 0) {
                     out.println("<h3>Cannot mod by zero</h3>");
                 } else {
-                    result = a % b;
-                    out.println("<h2>Result: " + result + "</h2>");
+                    out.println(RESULT_OPEN + (a % b) + RESULT_CLOSE);
                 }
             }
 
