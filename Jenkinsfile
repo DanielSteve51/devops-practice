@@ -20,29 +20,31 @@ pipeline {
             }
         }
 
-        stage('Build') {
+        stage('Building code') {
             steps {
                 sh 'mvn clean package -DskipTests'
             }
         }
 
-        stage('Sonar Analysis') {
+        stage('Code Quality Scan') {
             steps {
                 withSonarQubeEnv('sonar-server') {
                     sh 'mvn sonar:sonar'
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
                 timeout(time: 3, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
         }
 
-        stage('Build Docker Image'){
+        // stage('Quality Gate') {
+        //     steps {
+        //         timeout(time: 3, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
+
+        stage('Docker Build'){
             steps{
                 script{
                     sh """
@@ -54,7 +56,7 @@ pipeline {
             }
         }
 
-        stage('Push to ECR'){
+        stage('Image upload to ECR'){
             steps{
                 script{
                     sh """
@@ -65,7 +67,7 @@ pipeline {
             }
         }
 
-            stage('Deploy to ECS'){
+            stage('Deploying on ECS'){
                 steps{
                     script{
                         sh """
@@ -74,22 +76,25 @@ pipeline {
                             --service ${ECS_SERVICE} \
                             --force-new-deployment \
                             --region ${AWS_REGION}
+                        docker rmi ${APP_NAME}:${BUILD_NUMBER} || true
+                        docker rmi ${ECR_REPO}:${BUILD_NUMBER} || true
+                        docker rmi ${ECR_REPO}:latest || true
                         """
                     }
                 }
             }
 
-        stage('Cleanup Local Images') {
-            steps {
-                script {
-                    sh """
-                    docker rmi ${APP_NAME}:${BUILD_NUMBER} || true
-                    docker rmi ${ECR_REPO}:${BUILD_NUMBER} || true
-                    docker rmi ${ECR_REPO}:latest || true
-                    """
-                }
-            }
-        }
+        // stage('Cleanup Local Images') {
+        //     steps {
+        //         script {
+        //             sh """
+        //             docker rmi ${APP_NAME}:${BUILD_NUMBER} || true
+        //             docker rmi ${ECR_REPO}:${BUILD_NUMBER} || true
+        //             docker rmi ${ECR_REPO}:latest || true
+        //             """
+        //         }
+        //     }
+        // }
 
 
 
